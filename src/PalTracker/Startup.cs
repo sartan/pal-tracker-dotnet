@@ -15,7 +15,9 @@ namespace PalTracker
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly ILogger<Startup> _logger;
+
+        public Startup(ILogger<Startup> logger, IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -27,9 +29,19 @@ namespace PalTracker
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddSingleton(sp => new WelcomeMessage(
-                Configuration.GetValue<string>("WELCOME_MESSAGE", "WELCOME_MESSAGE not configured.")
-            ));
+            services.AddSingleton(sp =>
+            {
+                var messageString = Configuration.GetValue<string>("WELCOME_MESSAGE");
+
+                if (messageString == null)
+                {
+                    _logger.LogInformation("WELCOME_MESSAGE not configured.");
+                }
+
+                return new WelcomeMessage(
+                    messageString
+                );
+            });
 
             services.AddSingleton(sp => new CloudFoundryInfo(
                 Configuration.GetValue<string>("PORT"),
